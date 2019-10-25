@@ -8,10 +8,12 @@ import javax.persistence.Id
 class Device {
     @Id
     @GeneratedValue
-    var id: Long? = null
-    var type: Long = 0
+    var id: Int? = null
+    var type: Int = 0
     var friendlyName: String = ""
-    var maxChargingTimeMinutes: Long = 0
-    var chargingFinishedHour: Long = 0
-    var chargingFinishedMinute: Long = 0
+    var maxChargingTimeMinutes: Int = 0
+    var chargingFinishedHour: Int = 0
+    var chargingFinishedMinute: Int = 0
+    var immediateChargingActive: Boolean = false
+    var chargingState: Int = 0
 }
