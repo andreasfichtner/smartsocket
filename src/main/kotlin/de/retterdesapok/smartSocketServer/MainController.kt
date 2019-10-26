@@ -1,6 +1,5 @@
 package de.retterdesapok.smartSocketServer
 
-import org.json.JSONObject
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,8 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
 import java.util.*
-import kotlin.math.roundToInt
-
 
 @RestController
 class MainController {
@@ -32,29 +29,9 @@ class MainController {
 
     @RequestMapping(value = ["/initTestDevices"])
     fun initTestDevices() {
-        val juliasDevice = Device()
-        juliasDevice.chargingFinishedHour = 8
-        juliasDevice.chargingFinishedMinute = 0
-        juliasDevice.name = "Julias Rasenmäher"
-        juliasDevice.maxChargingTimeSeconds = 10000
-        juliasDevice.chargedSeconds = 8000
-        deviceRepository?.save(juliasDevice)
-
-        val alexDevice = Device()
-        alexDevice.chargingFinishedHour = 8
-        alexDevice.chargingFinishedMinute = 0
-        alexDevice.name = "Alex' iPhone"
-        alexDevice.maxChargingTimeSeconds = 7200
-        alexDevice.chargedSeconds = 2000
-        deviceRepository?.save(alexDevice)
-
-        val andisDevice = Device()
-        andisDevice.chargingFinishedHour = 16
-        andisDevice.chargingFinishedMinute = 10
-        andisDevice.name = "Andis QuickCharging Test"
-        andisDevice.maxChargingTimeSeconds = 360
-        andisDevice.chargedSeconds = 0
-        deviceRepository?.save(andisDevice)
+        if (deviceRepository != null) {
+            Utilities().createTestDevices(deviceRepository)
+        }
     }
 
     @RequestMapping(value = ["/device"], method = [RequestMethod.POST], consumes = ["application/json"])
@@ -78,7 +55,7 @@ class MainController {
 
     @RequestMapping(value = ["/emissions/current"])
     fun emissionsCurrent(): EmissionsData {
-       return Utilities().getCurrentEmissionsData()
+       return Utilities().getCurrentEmissionsData(emissionsDataRepository)
     }
 
     @RequestMapping(value = ["/devices"])
@@ -91,25 +68,36 @@ class MainController {
         return deviceRepository?.findAll()
     }
 
-    @RequestMapping(value = ["test/deviceConnected"])
-    fun testDeviceConnected(deviceID: Int) : Boolean {
+    @RequestMapping(value = ["setSmartSocketInfo"])
+    fun setSmartSocketInfo(deviceID: Int) : Boolean {
         val device = deviceRepository?.findById(deviceID)
         if(device != null) {
-            deviceConnected(device)
-            return Utilities().shouldDeviceCharge(device)
+            var shouldCharge = false
+
+            if(device.chargingState == "unplugged") {
+                deviceConnected(device)
+                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+            } else if(device.chargingState == "plugged_in") {
+                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+            } else if(device.chargingState == "charging") {
+                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+                if(shouldCharge) {
+
+                }
+            }
+
+            return shouldCharge
         }
 
         return false
     }
 
     fun deviceConnected(device: Device) {
-        if(device.chargingState == "unplugged") {
-            device.chargingState = "plugged_in"
-            device.pluggedInEpoch = Date().toInstant().epochSecond
-            device.chargedSeconds = 0
-            device.chargingStartedEpoch = 0
-            device.chargingDueEpoch = Utilities().getChargingDueDateForDevice(device)
-            deviceRepository?.save(device)
-        }
+        device.chargingState = "plugged_in"
+        device.pluggedInSince = Date().toInstant().epochSecond
+        device.accountedChargedSeconds = 0
+        device.unaccountedChargingSince = 0
+        device.chargingDueEpoch = Utilities().getChargingDueDateForDevice(device)
+        deviceRepository?.save(device)
     }
 }

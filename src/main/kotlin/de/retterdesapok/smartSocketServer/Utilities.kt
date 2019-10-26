@@ -1,28 +1,21 @@
 package de.retterdesapok.smartSocketServer
 
 import org.json.JSONObject
-import org.springframework.beans.factory.annotation.Autowired
 import java.time.*
 import java.util.*
-import java.util.spi.CalendarDataProvider
 import kotlin.math.roundToInt
 
 class Utilities {
 
-    @Autowired
-    private val deviceRepository: DeviceRepository? = null
-    @Autowired
-    private val emissionsDataRepository: EmissionsDataRepository? = null
-
-    fun loadEmissionsDataFromApi(): JSONObject {
-        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=DE"
+    private fun loadEmissionsDataFromApi(): JSONObject {
+        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=AT"
         val params = mapOf("auth-token" to System.getenv("co2signal_apikey"))
         val emissionsApiResult = khttp.get(baseurl, params)
         val emissionsJson = emissionsApiResult.jsonObject
         return emissionsJson["data"] as JSONObject
     }
 
-    fun getCurrentEmissionsData(): EmissionsData {
+    fun getCurrentEmissionsData(emissionsDataRepository: EmissionsDataRepository?): EmissionsData {
         var lastDataPoint = emissionsDataRepository?.findTopByOrderByIdDesc()
         if(lastDataPoint == null || lastDataPoint.epochSecond < Date().toInstant().epochSecond - 60) {
             val currentData = loadEmissionsDataFromApi()
@@ -46,7 +39,7 @@ class Utilities {
         return dateTime.toEpochSecond()
     }
 
-    fun shouldDeviceCharge(device: Device): Boolean {
+    fun shouldDeviceCharge(device: Device, emissionsDataRepository: EmissionsDataRepository?): Boolean {
         // Override active, we should charge
         if(device.immediateChargingActive) return true
 
@@ -58,7 +51,27 @@ class Utilities {
         if(device.chargingDueEpoch - Date().toInstant().epochSecond <= remainingChargeTime) return true
 
         // Simple charging strategy: Require co2 emissions in g/kWh to be smaller than remaining time to start
-        val emissions = getCurrentEmissionsData().carbonIntensity
-        return emissions < remainingChargeTime
+        val emissions = getCurrentEmissionsData(emissionsDataRepository).carbonIntensity
+        return (emissions / remainingChargeTime) > 1
+    }
+
+    fun createTestDevices(deviceRepository: DeviceRepository?) {
+        val juliasDevice = Device()
+        juliasDevice.chargingFinishedHour = 19
+        juliasDevice.chargingFinishedMinute = 0
+        juliasDevice.name = "Julias Rasenmäher"
+        juliasDevice.type = "lawn_mower"
+        juliasDevice.maxChargingTimeSeconds = 10000
+        juliasDevice.accountedChargedSeconds = 8000
+        deviceRepository?.save(juliasDevice)
+
+        val alexDevice = Device()
+        alexDevice.chargingFinishedHour = 23
+        alexDevice.chargingFinishedMinute = 0
+        alexDevice.name = "Alex' Autoscooter"
+        alexDevice.type = "car"
+        alexDevice.maxChargingTimeSeconds = 7200
+        alexDevice.accountedChargedSeconds = 2000
+        deviceRepository?.save(alexDevice)
     }
 }
