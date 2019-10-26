@@ -76,32 +76,55 @@ class MainController {
         return deviceRepository?.findAll()
     }
 
-    @RequestMapping(value = ["test/dueDate"])
-    fun getDevices(deviceId : Device): Iterable<Device>? {
-        return deviceRepository?.findAll()
-    }
-
     @RequestMapping(value = ["setSmartSocketInfo"])
-    fun setSmartSocketInfo(deviceID: Int) : Boolean {
-        val device = deviceRepository?.findById(deviceID)
-        if(device != null) {
-            var shouldCharge = false
-
-            if(device.chargingState == "unplugged") {
-                Utilities().deviceConnected(device, deviceRepository)
-                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
-            } else if(device.chargingState == "plugged_in") {
-                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
-            } else if(device.chargingState == "charging") {
-                shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
-                if(shouldCharge) {
-
-                }
+    fun setSmartSocketInfo(tag: String) : Boolean {
+        var foundDevice = deviceRepository?.findByTag(tag)?.firstOrNull()
+        if(foundDevice == null) {
+            foundDevice = deviceRepository?.findByTag(null)?.firstOrNull()
+            if (foundDevice != null) {
+                foundDevice.tag = tag
             }
-
-            return shouldCharge
         }
 
-        return false
+        if(foundDevice == null) {
+           return false
+        }
+        val device = foundDevice
+        var shouldCharge = false
+
+        if(device.chargingState == "unplugged") {
+            Utilities().deviceConnected(device, deviceRepository)
+            shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+        } else if(device.chargingState == "plugged_in") {
+            shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+            if(shouldCharge) {
+                device.chargingState = "charging"
+                device.unaccountedChargingSince = java.util.Date().toInstant().epochSecond
+            }
+        } else if(device.chargingState == "charging") {
+            shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
+            if(!shouldCharge) {
+                device.accountedChargedSeconds += device.chargedSeconds
+                device.chargingState = "plugged_in"
+            }
+        }
+
+        deviceRepository?.save(device)
+
+        // Stop all other active charges
+        for(otherDevice in deviceRepository?.findAll()!!) {
+            if(otherDevice.id != device.id) {
+                if(otherDevice.chargingState == "charging") {
+                    device.accountedChargedSeconds += device.chargedSeconds
+                    device.chargingState = "unplugged"
+                    deviceRepository.save(otherDevice)
+                } else  if(otherDevice.chargingState == "plugged_in") {
+                    device.chargingState = "unplugged"
+                    deviceRepository.save(otherDevice)
+                }
+            }
+        }
+
+        return shouldCharge
     }
 }

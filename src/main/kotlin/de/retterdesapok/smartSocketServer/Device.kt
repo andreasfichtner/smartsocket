@@ -11,6 +11,8 @@ class Device {
     @Id
     @GeneratedValue
     var id: Int? = null
+    @Column(unique=true, nullable=true)
+    var tag: String? = null
     @Column(unique=true)
     var name: String? = null
     var type: String? = "default"
