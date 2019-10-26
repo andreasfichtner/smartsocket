@@ -46,7 +46,9 @@ class MainController {
             if (device != null) {
                 device.name = sentDevice.name ?: device.name
                 device.type = sentDevice.type ?: device.type
-                device.immediateChargingActive = sentDevice.immediateChargingActive ?: device.immediateChargingActive
+                if(sentDevice.immediateChargingActive != null) {
+                    device.immediateChargingActive = sentDevice.immediateChargingActive
+                }
                 device.chargingFinishedHour = sentDevice.chargingFinishedHour ?: device.chargingFinishedHour
                 device.chargingFinishedMinute = sentDevice.chargingFinishedMinute ?: device.chargingFinishedMinute
 
