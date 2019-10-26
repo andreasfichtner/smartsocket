@@ -47,6 +47,14 @@ class MainController {
         alexDevice.maxChargingTimeSeconds = 7200
         alexDevice.chargedSeconds = 2000
         deviceRepository?.save(alexDevice)
+
+        val andisDevice = Device()
+        andisDevice.chargingFinishedHour = 16
+        andisDevice.chargingFinishedMinute = 10
+        andisDevice.name = "Andis QuickCharging Test"
+        andisDevice.maxChargingTimeSeconds = 360
+        andisDevice.chargedSeconds = 0
+        deviceRepository?.save(andisDevice)
     }
 
     @RequestMapping(value = ["/device"], method = [RequestMethod.POST], consumes = ["application/json"])
@@ -70,19 +78,38 @@ class MainController {
 
     @RequestMapping(value = ["/emissions/current"])
     fun emissionsCurrent(): EmissionsData {
-        var lastDataPoint = emissionsDataRepository?.findTopByOrderByIdDesc()
-        if(lastDataPoint == null || lastDataPoint.epochSecond < Date().toInstant().epochSecond - 60) {
-            val currentData = Utilities().currentEmissionsData()
-            lastDataPoint = EmissionsData()
-            lastDataPoint.carbonIntensity = (currentData["carbonIntensity"] as Double).roundToInt()
-            lastDataPoint.fossilFuelPercentage = (currentData["fossilFuelPercentage"] as Double).toInt()
-            emissionsDataRepository?.save(lastDataPoint)
-        }
-        return lastDataPoint
+       return Utilities().getCurrentEmissionsData()
     }
 
     @RequestMapping(value = ["/devices"])
     fun getDevices(): Iterable<Device>? {
         return deviceRepository?.findAll()
+    }
+
+    @RequestMapping(value = ["test/dueDate"])
+    fun getDevices(deviceId : Device): Iterable<Device>? {
+        return deviceRepository?.findAll()
+    }
+
+    @RequestMapping(value = ["test/deviceConnected"])
+    fun testDeviceConnected(deviceID: Int) : Boolean {
+        val device = deviceRepository?.findById(deviceID)
+        if(device != null) {
+            deviceConnected(device)
+            return Utilities().shouldDeviceCharge(device)
+        }
+
+        return false
+    }
+
+    fun deviceConnected(device: Device) {
+        if(device.chargingState == "unplugged") {
+            device.chargingState = "plugged_in"
+            device.pluggedInEpoch = Date().toInstant().epochSecond
+            device.chargedSeconds = 0
+            device.chargingStartedEpoch = 0
+            device.chargingDueEpoch = Utilities().getChargingDueDateForDevice(device)
+            deviceRepository?.save(device)
+        }
     }
 }

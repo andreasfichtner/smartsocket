@@ -1,5 +1,6 @@
 package de.retterdesapok.smartSocketServer
 
+import java.sql.Date
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
@@ -19,4 +20,7 @@ class Device {
     var chargingFinishedMinute: Int = 0
     var immediateChargingActive: Boolean = false
     var chargingState: String = "unplugged"
+    var pluggedInEpoch: Long = 0
+    var chargingStartedEpoch: Long = 0
+    var chargingDueEpoch: Long = 0
 }
