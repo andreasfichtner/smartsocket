@@ -72,7 +72,7 @@ class Utilities {
         juliasDevice.chargingFinishedMinute = 0
         juliasDevice.name = "Julias Rasenmäher"
         juliasDevice.type = "lawn_mower"
-        juliasDevice.maxChargingTimeSeconds = 10000
+        juliasDevice.maxChargingTimeSeconds = 1800
         juliasDevice.accountedChargedSeconds = 0
         deviceRepository?.save(juliasDevice)
 
@@ -90,7 +90,7 @@ class Utilities {
         andisDevice.chargingFinishedMinute = 0
         andisDevice.name = "Andis Nokia"
         andisDevice.type = "smartphone"
-        andisDevice.maxChargingTimeSeconds = 3600
+        andisDevice.maxChargingTimeSeconds = 600
         andisDevice.accountedChargedSeconds = 0
         deviceRepository?.save(andisDevice)
         deviceConnected(andisDevice, deviceRepository)
