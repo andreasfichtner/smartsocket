@@ -22,13 +22,14 @@ class MainController {
         val device = Device()
         device.chargingFinishedHour = 8
         device.chargingFinishedMinute = 0
-        device.friendlyName = "Testgerät"
-        device.maxChargingTimeMinutes = 60
+        device.name = "Der Gerät"
+        device.maxChargingTimeSeconds = 60
+        device.chargedSeconds = 30
         deviceRepository?.save(device)
         return device
     }
 
-    @RequestMapping(value = ["/device"], method = [RequestMethod.POST])
+    @RequestMapping(value = ["/device"], method = [RequestMethod.POST], consumes = ["application/json"])
     fun postDevice(@RequestBody device: Device): Device {
         if(device.id ?: -1 < 0) {
             device.id = null
