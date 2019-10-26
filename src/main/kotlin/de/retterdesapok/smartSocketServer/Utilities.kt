@@ -30,25 +30,25 @@ class Utilities {
     // Device has just been connected, at what time should charging be finished?
     fun getChargingDueDateForDevice(device: Device): Long {
         var dateTime = ZonedDateTime.now()
-        if(dateTime.hour * 60 + dateTime.minute > device.chargingFinishedHour * 60 + device.chargingFinishedMinute) {
+        if(dateTime.hour * 60 + dateTime.minute > device.chargingFinishedHour!! * 60 + device.chargingFinishedMinute!!) {
             dateTime = dateTime.withDayOfYear(dateTime.dayOfYear + 1)
         }
-        dateTime = dateTime.withHour(device.chargingFinishedHour)
-        dateTime = dateTime.withMinute(device.chargingFinishedMinute)
+        dateTime = device.chargingFinishedHour?.let { dateTime.withHour(it) }
+        dateTime = device.chargingFinishedMinute?.let { dateTime.withMinute(it) }
 
         return dateTime.toEpochSecond()
     }
 
     fun shouldDeviceCharge(device: Device, emissionsDataRepository: EmissionsDataRepository?): Boolean {
         // Override active, we should charge
-        if(device.immediateChargingActive) return true
+        if(device.immediateChargingActive!!) return true
 
         // Determine time until full charge is required
-        val remainingChargeTime = device.maxChargingTimeSeconds - device.chargedSeconds
+        val remainingChargeTime = device.maxChargingTimeSeconds!! - device.chargedSeconds
 
         // Remaining charge time is equal or lower than remaining time to target time
         // We need to charge or we would miss the target
-        if(device.chargingDueEpoch - Date().toInstant().epochSecond <= remainingChargeTime) return true
+        if(device.chargingDueEpoch!! - Date().toInstant().epochSecond <= remainingChargeTime) return true
 
         // Simple charging strategy: Require co2 emissions in g/kWh to be smaller than remaining time to start
         val emissions = getCurrentEmissionsData(emissionsDataRepository).carbonIntensity
@@ -75,7 +75,8 @@ class Utilities {
 
         deviceConnected(juliasDevice, deviceRepository)
         juliasDevice.chargingState = "charging"
-        juliasDevice.pluggedInSince = Date().toInstant().epochSecond - 8000
+        juliasDevice.unaccountedChargingSince = Date().toInstant().epochSecond
+        juliasDevice.pluggedInSince = juliasDevice.unaccountedChargingSince!! - 8000
         juliasDevice.accountedChargedSeconds = 8000
         deviceRepository?.save(juliasDevice)
 
@@ -87,5 +88,15 @@ class Utilities {
         alexDevice.maxChargingTimeSeconds = 7200
         alexDevice.accountedChargedSeconds = 0
         deviceRepository?.save(alexDevice)
+
+        val andisDevice = Device()
+        andisDevice.chargingFinishedHour = 12
+        andisDevice.chargingFinishedMinute = 0
+        andisDevice.name = "Andis Nokia"
+        andisDevice.type = "smartphone"
+        andisDevice.maxChargingTimeSeconds = 3600
+        andisDevice.accountedChargedSeconds = 0
+        deviceRepository?.save(andisDevice)
+        deviceConnected(andisDevice, deviceRepository)
     }
 }

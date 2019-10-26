@@ -1,7 +1,6 @@
 package de.retterdesapok.smartSocketServer
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import java.sql.Date
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
@@ -13,26 +12,31 @@ class Device {
     @GeneratedValue
     var id: Int? = null
     @Column(unique=true)
-    var name: String = ""
-    var type: String = "default"
-    var maxChargingTimeSeconds: Int = 0
+    var name: String? = null
+    var type: String? = "default"
+    var maxChargingTimeSeconds: Int? = null
 
-    var chargingFinishedHour: Int = 0
-    var chargingFinishedMinute: Int = 0
-    var immediateChargingActive: Boolean = false
+    var chargingFinishedHour: Int? = null
+    var chargingFinishedMinute: Int? = null
+    var immediateChargingActive: Boolean? = false
     var chargingState: String = "unplugged"
-    var chargingDueEpoch: Long = 0
-    var pluggedInSince: Long = 0
+    var chargingDueEpoch: Long? = null
+    var pluggedInSince: Long? = null
     val chargedSeconds get() = computeChargedSeconds()
 
     @JsonIgnore
-    var unaccountedChargingSince: Long = 0
+    var unaccountedChargingSince: Long? = null
 
     @JsonIgnore
     var accountedChargedSeconds: Long = 0
 
-    fun computeChargedSeconds(): Long {
-        val unaccountedChargeSeconds = if(unaccountedChargingSince > 0) java.util.Date().toInstant().epochSecond - unaccountedChargingSince else 0
-        return accountedChargedSeconds + unaccountedChargeSeconds
+    private fun computeChargedSeconds(): Long {
+
+        unaccountedChargingSince?.let {
+            val unaccountedChargeSeconds = if (it > 0) java.util.Date().toInstant().epochSecond - it else 0
+            return accountedChargedSeconds + unaccountedChargeSeconds
+        }
+
+        return accountedChargedSeconds
     }
 }

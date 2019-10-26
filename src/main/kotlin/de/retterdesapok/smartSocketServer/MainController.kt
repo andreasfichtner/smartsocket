@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
-import java.util.*
 
 @RestController
 class MainController {
@@ -35,12 +34,26 @@ class MainController {
     }
 
     @RequestMapping(value = ["/device"], method = [RequestMethod.POST], consumes = ["application/json"])
-    fun postDevice(@RequestBody device: Device): Device {
-        if(device.id ?: -1 < 0) {
-            device.id = null
+    fun postDevice(@RequestBody sentDevice: Device): Device? {
+        if(sentDevice.id ?: -1 < 0) {
+            // Existing device
+            sentDevice.id = null
+            deviceRepository?.save(sentDevice)
+            return sentDevice
+        } else {
+            // Updated device
+            val device = deviceRepository?.findById(sentDevice.id!!)
+            if (device != null) {
+                device.name = sentDevice.name ?: device.name
+                device.type = sentDevice.type ?: device.type
+                device.immediateChargingActive = sentDevice.immediateChargingActive ?: device.immediateChargingActive
+                device.chargingFinishedHour = sentDevice.chargingFinishedHour ?: device.chargingFinishedHour
+                device.chargingFinishedMinute = sentDevice.chargingFinishedMinute ?: device.chargingFinishedMinute
+                deviceRepository?.save(device)
+            }
+
+            return device
         }
-        deviceRepository?.save(device)
-        return device
     }
 
     @RequestMapping(value = ["/device"], method = [RequestMethod.DELETE])
