@@ -15,7 +15,7 @@ class Device {
     var tag: String? = null
     @Column(unique=true)
     var name: String? = null
-    var type: String? = "default"
+    var type: String? = null
     var maxChargingTimeSeconds: Int? = null
 
     var chargingFinishedHour: Int? = null
