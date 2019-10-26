@@ -32,6 +32,7 @@ class Device {
     var accountedChargedSeconds: Long = 0
 
     fun computeChargedSeconds(): Long {
-        return accountedChargedSeconds + java.lang.Math.max(0, (java.util.Date().toInstant().epochSecond - unaccountedChargingSince))
+        val unaccountedChargeSeconds = if(unaccountedChargingSince > 0) java.util.Date().toInstant().epochSecond - unaccountedChargingSince else 0
+        return accountedChargedSeconds + unaccountedChargeSeconds
     }
 }

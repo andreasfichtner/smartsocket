@@ -75,7 +75,7 @@ class MainController {
             var shouldCharge = false
 
             if(device.chargingState == "unplugged") {
-                deviceConnected(device)
+                Utilities().deviceConnected(device, deviceRepository)
                 shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
             } else if(device.chargingState == "plugged_in") {
                 shouldCharge = Utilities().shouldDeviceCharge(device, emissionsDataRepository)
@@ -90,14 +90,5 @@ class MainController {
         }
 
         return false
-    }
-
-    fun deviceConnected(device: Device) {
-        device.chargingState = "plugged_in"
-        device.pluggedInSince = Date().toInstant().epochSecond
-        device.accountedChargedSeconds = 0
-        device.unaccountedChargingSince = 0
-        device.chargingDueEpoch = Utilities().getChargingDueDateForDevice(device)
-        deviceRepository?.save(device)
     }
 }

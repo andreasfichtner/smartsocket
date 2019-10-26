@@ -55,6 +55,15 @@ class Utilities {
         return (emissions / remainingChargeTime) > 1
     }
 
+    fun deviceConnected(device: Device, deviceRepository: DeviceRepository?) {
+        device.chargingState = "plugged_in"
+        device.pluggedInSince = Date().toInstant().epochSecond
+        device.accountedChargedSeconds = 0
+        device.unaccountedChargingSince = 0
+        device.chargingDueEpoch = Utilities().getChargingDueDateForDevice(device)
+        deviceRepository?.save(device)
+    }
+
     fun createTestDevices(deviceRepository: DeviceRepository?) {
         val juliasDevice = Device()
         juliasDevice.chargingFinishedHour = 19
@@ -62,6 +71,11 @@ class Utilities {
         juliasDevice.name = "Julias Rasenmäher"
         juliasDevice.type = "lawn_mower"
         juliasDevice.maxChargingTimeSeconds = 10000
+        deviceRepository?.save(juliasDevice)
+
+        deviceConnected(juliasDevice, deviceRepository)
+        juliasDevice.chargingState = "charging"
+        juliasDevice.pluggedInSince = Date().toInstant().epochSecond - 8000
         juliasDevice.accountedChargedSeconds = 8000
         deviceRepository?.save(juliasDevice)
 
@@ -71,7 +85,7 @@ class Utilities {
         alexDevice.name = "Alex' Autoscooter"
         alexDevice.type = "car"
         alexDevice.maxChargingTimeSeconds = 7200
-        alexDevice.accountedChargedSeconds = 2000
+        alexDevice.accountedChargedSeconds = 0
         deviceRepository?.save(alexDevice)
     }
 }
