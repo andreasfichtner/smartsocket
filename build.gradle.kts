@@ -14,6 +14,7 @@ java.sourceCompatibility = JavaVersion.VERSION_1_8
 
 repositories {
 	mavenCentral()
+	maven(url = "http://jcenter.bintray.com")
 }
 
 dependencies {
@@ -22,6 +23,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa:1.3.5.RELEASE")
 	implementation("com.h2database:h2:1.4.191")
+	implementation("khttp:khttp:1.0.0")
 }
 
 tasks.withType<KotlinCompile> {
