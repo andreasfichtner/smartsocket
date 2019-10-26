@@ -128,6 +128,7 @@ class MainController {
             if(otherDevice.id != device?.id) {
                 if(otherDevice.chargingState == "charging") {
                     otherDevice.accountedChargedSeconds += otherDevice.chargedSeconds
+                    otherDevice.immediateChargingActive = false
                     otherDevice.chargingState = "unplugged"
                     deviceRepository.save(otherDevice)
                 } else  if(otherDevice.chargingState == "plugged_in") {
