@@ -52,6 +52,8 @@ class Utilities {
 
         // Simple charging strategy: Require co2 emissions in g/kWh to be smaller than remaining time to start
         val emissions = getCurrentEmissionsData(emissionsDataRepository).carbonIntensity
+        println("Emissions" + emissions)
+        println("Remaining charge time" + remainingChargeTime);
         return (emissions / remainingChargeTime) > 1
     }
 
@@ -66,22 +68,16 @@ class Utilities {
 
     fun createTestDevices(deviceRepository: DeviceRepository?) {
         val juliasDevice = Device()
-        juliasDevice.chargingFinishedHour = 19
+        juliasDevice.chargingFinishedHour = 3
         juliasDevice.chargingFinishedMinute = 0
         juliasDevice.name = "Julias Rasenmäher"
         juliasDevice.type = "lawn_mower"
         juliasDevice.maxChargingTimeSeconds = 10000
-        deviceRepository?.save(juliasDevice)
-
-        deviceConnected(juliasDevice, deviceRepository)
-        juliasDevice.chargingState = "charging"
-        juliasDevice.unaccountedChargingSince = Date().toInstant().epochSecond
-        juliasDevice.pluggedInSince = juliasDevice.unaccountedChargingSince!! - 8000
-        juliasDevice.accountedChargedSeconds = 8000
+        juliasDevice.accountedChargedSeconds = 0
         deviceRepository?.save(juliasDevice)
 
         val alexDevice = Device()
-        alexDevice.chargingFinishedHour = 23
+        alexDevice.chargingFinishedHour = 1
         alexDevice.chargingFinishedMinute = 0
         alexDevice.name = "Alex' Autoscooter"
         alexDevice.type = "car"

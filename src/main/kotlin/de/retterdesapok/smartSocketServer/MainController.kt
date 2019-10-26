@@ -49,6 +49,11 @@ class MainController {
                 device.immediateChargingActive = sentDevice.immediateChargingActive ?: device.immediateChargingActive
                 device.chargingFinishedHour = sentDevice.chargingFinishedHour ?: device.chargingFinishedHour
                 device.chargingFinishedMinute = sentDevice.chargingFinishedMinute ?: device.chargingFinishedMinute
+
+                if(device.chargingState == "plugged_in" && device.immediateChargingActive == true) {
+                    device.chargingState = "charging"
+                    device.unaccountedChargingSince = java.util.Date().toInstant().epochSecond
+                }
                 deviceRepository?.save(device)
             }
 
@@ -87,7 +92,8 @@ class MainController {
         }
 
         if(foundDevice == null) {
-           return false
+            unplugDevicesExcept(null)
+            return false
         }
         val device = foundDevice
         var shouldCharge = false
@@ -111,20 +117,24 @@ class MainController {
 
         deviceRepository?.save(device)
 
+        unplugDevicesExcept(device)
+
+        return shouldCharge
+    }
+
+    fun unplugDevicesExcept(device: Device?) {
         // Stop all other active charges
         for(otherDevice in deviceRepository?.findAll()!!) {
-            if(otherDevice.id != device.id) {
+            if(otherDevice.id != device?.id) {
                 if(otherDevice.chargingState == "charging") {
-                    device.accountedChargedSeconds += device.chargedSeconds
-                    device.chargingState = "unplugged"
+                    otherDevice.accountedChargedSeconds += otherDevice.chargedSeconds
+                    otherDevice.chargingState = "unplugged"
                     deviceRepository.save(otherDevice)
                 } else  if(otherDevice.chargingState == "plugged_in") {
-                    device.chargingState = "unplugged"
+                    otherDevice.chargingState = "unplugged"
                     deviceRepository.save(otherDevice)
                 }
             }
         }
-
-        return shouldCharge
     }
 }
