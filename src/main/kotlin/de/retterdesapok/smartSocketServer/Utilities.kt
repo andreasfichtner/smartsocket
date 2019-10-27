@@ -30,14 +30,17 @@ class Utilities {
     // Device has just been connected, at what time should charging be finished?
     fun getChargingDueDateForDevice(device: Device): Long {
 
-        var dateTime = ZonedDateTime.now()
-        if(dateTime.hour * 60 + dateTime.minute > device.chargingFinishedHour!! * 60 + device.chargingFinishedMinute!!) {
-            dateTime = dateTime.withDayOfYear(dateTime.dayOfYear + 1)
-        }
-        dateTime = device.chargingFinishedHour?.let { dateTime.withHour(it) }
-        dateTime = device.chargingFinishedMinute?.let { dateTime.withMinute(it) }
+        val zoneID = ZoneId.of("Europe/Berlin");
+        val dateTime =  LocalDateTime.now()
+        var currentISTime = dateTime.atZone(zoneID);
 
-        return dateTime.toEpochSecond()
+        if(currentISTime.hour * 60 + currentISTime.minute > device.chargingFinishedHour!! * 60 + device.chargingFinishedMinute!!) {
+            currentISTime = currentISTime.withDayOfYear(currentISTime.dayOfYear + 1)
+        }
+        currentISTime = device.chargingFinishedHour?.let { currentISTime.withHour(it) }
+        currentISTime = device.chargingFinishedMinute?.let { currentISTime.withMinute(it) }
+
+        return currentISTime.toEpochSecond()
     }
 
     fun shouldDeviceCharge(device: Device, emissionsDataRepository: EmissionsDataRepository?): Boolean {
