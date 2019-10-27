@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.context.event.EventListener
+import java.time.ZonedDateTime
 
 @RestController
 class MainController {
@@ -38,6 +39,13 @@ class MainController {
         if(sentDevice.id ?: -1 < 0) {
             // Existing device
             sentDevice.id = null
+            if(sentDevice.chargingFinishedHour == null) {
+                sentDevice.chargingFinishedHour = 0
+            }
+            if(sentDevice.chargingFinishedMinute == null) {
+                sentDevice.chargingFinishedMinute = 0
+            }
+
             deviceRepository?.save(sentDevice)
             return sentDevice
         } else {

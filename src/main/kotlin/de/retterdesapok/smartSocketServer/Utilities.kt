@@ -29,6 +29,7 @@ class Utilities {
 
     // Device has just been connected, at what time should charging be finished?
     fun getChargingDueDateForDevice(device: Device): Long {
+
         var dateTime = ZonedDateTime.now()
         if(dateTime.hour * 60 + dateTime.minute > device.chargingFinishedHour!! * 60 + device.chargingFinishedMinute!!) {
             dateTime = dateTime.withDayOfYear(dateTime.dayOfYear + 1)
