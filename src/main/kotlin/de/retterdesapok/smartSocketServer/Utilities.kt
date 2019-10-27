@@ -8,7 +8,7 @@ import kotlin.math.roundToInt
 class Utilities {
 
     private fun loadEmissionsDataFromApi(): JSONObject {
-        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=DE"
+        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=AT"
         val params = mapOf("auth-token" to System.getenv("co2signal_apikey"))
         val emissionsApiResult = khttp.get(baseurl, params)
         val emissionsJson = emissionsApiResult.jsonObject
