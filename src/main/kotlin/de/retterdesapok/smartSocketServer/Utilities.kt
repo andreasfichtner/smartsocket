@@ -8,7 +8,7 @@ import kotlin.math.roundToInt
 class Utilities {
 
     private fun loadEmissionsDataFromApi(): JSONObject {
-        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=AT"
+        val baseurl = "https://api.co2signal.com/v1/latest?countryCode=DE"
         val params = mapOf("auth-token" to System.getenv("co2signal_apikey"))
         val emissionsApiResult = khttp.get(baseurl, params)
         val emissionsJson = emissionsApiResult.jsonObject
@@ -18,10 +18,17 @@ class Utilities {
     fun getCurrentEmissionsData(emissionsDataRepository: EmissionsDataRepository?): EmissionsData {
         var lastDataPoint = emissionsDataRepository?.findTopByOrderByIdDesc()
         if(lastDataPoint == null || lastDataPoint.epochSecond < Date().toInstant().epochSecond - 60) {
-            val currentData = loadEmissionsDataFromApi()
             lastDataPoint = EmissionsData()
-            lastDataPoint.carbonIntensity = (currentData["carbonIntensity"] as Double).roundToInt()
-            lastDataPoint.fossilFuelPercentage = (currentData["fossilFuelPercentage"] as Double).toInt()
+
+            try {
+                val currentData = loadEmissionsDataFromApi()
+                lastDataPoint.carbonIntensity = (currentData["carbonIntensity"] as Double).roundToInt()
+                lastDataPoint.fossilFuelPercentage = (currentData["fossilFuelPercentage"] as Double).toInt()
+            } catch(e: Exception) {
+                lastDataPoint.carbonIntensity = 150
+                lastDataPoint.fossilFuelPercentage = 75
+            }
+
             emissionsDataRepository?.save(lastDataPoint)
         }
         return lastDataPoint
