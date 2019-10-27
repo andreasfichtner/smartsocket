@@ -96,7 +96,7 @@ class MainController {
         var foundDevice = deviceRepository?.findByTag(tag)?.firstOrNull()
         if(foundDevice == null) {
             foundDevice = deviceRepository?.findByTag(null)?.firstOrNull()
-            if (foundDevice != null) {
+            if (foundDevice != null && tag != "null") {
                 foundDevice.tag = tag
             }
         }
